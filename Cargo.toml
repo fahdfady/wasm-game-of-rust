@@ -2,7 +2,7 @@
 name = "wasm-game-of-rust"
 version = "0.1.0"
 authors = ["fahdfady <fahd.fady212@gmail.com>"]
-edition = "2025"
+edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
