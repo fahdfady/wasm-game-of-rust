@@ -7,6 +7,9 @@ use wasm_bindgen::prelude::*;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+extern crate fixedbitset;
+use fixedbitset::FixedBitSet;
+
 #[wasm_bindgen]
 #[repr(u8)] // each cell is represented as a single byte.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -21,7 +24,7 @@ pub enum Cell {
 struct Universe {
     width: u32,  // 8*4
     height: u32, // 8*4
-    cells: Vec<Cell>,
+    cells: FixedBitSet,
 }
 
 // formula to find the array index of the cell inside of the universe
@@ -36,8 +39,8 @@ impl Universe {
         self.height
     }
 
-    pub fn cells(&self) -> *const Cell {
-        self.cells.as_ptr()
+    pub fn cells(&self) -> *const u32 {
+        self.cells.as_slice().as_ptr() as *const u32
     }
 
     fn get_index(&self, row: u32, column: u32) -> usize {
@@ -63,29 +66,31 @@ impl Universe {
 
     /// Public methods are exported to JavaScript.
     pub fn tick(&mut self) {
-        let mut next = self.cells.clone();
+        let mut next: FixedBitSet = self.cells.clone();
 
         for row in 0..self.height {
             for column in 0..self.width {
-                let index = self.get_index(row, column);
+                let index: usize = self.get_index(row, column);
                 let cell = self.cells[index];
 
                 let live_neighbors = self.live_neighbor_count(row, column);
 
-                let next_cell = match (cell, live_neighbors) {
-                    // Rule 1: Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
-                    (Cell::Alive, x) if x < 2 => Cell::Dead,
-                    // Rule 2: Any live cell with two or three live neighbours lives on to the next generation.
-                    (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
-                    // Rule 3 Any live cell with more than three live neighbours dies, as if by overpopulation.
-                    (Cell::Alive, x) if x > 3 => Cell::Dead,
-                    // Rule 4: Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-                    (Cell::Dead, 3) => Cell::Alive,
-                    // All other cells remain in the same state.
-                    (otherwise, _) => otherwise,
-                };
+                next.set(
+                    index,
+                    match (cell, live_neighbors) {
+                        // frst rule: Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+                        (true, x) if x < 2 => false,
+                        // second rule: Any live cell with two or three live neighbours lives on to the next generation.
+                        (true, 2) | (true, 3) => true,
+                        // third rule: Any live cell with more than three live neighbours dies, as if by overpopulation.
+                        (true, x) if x > 3 => false,
+                        // fourth rule: Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+                        (false, 3) => true,
 
-                next[index] = next_cell;
+                        // all other cells remain in the same state.
+                        (otherwise, _) => otherwise,
+                    },
+                )
             }
         }
 
@@ -96,15 +101,13 @@ impl Universe {
         let width: u32 = 64;
         let height: u32 = 64;
 
-        let cells: Vec<Cell> = (0..width * height)
-            .map(|_|{
-                if js_sys::Math::random() < 0.5 {
-                    Cell::Alive
-                } else {
-                    Cell::Dead
-                }
-            })
-            .collect();
+        let universe_size = (width * height) as usize;
+
+        let mut cells: FixedBitSet = FixedBitSet::with_capacity(universe_size);
+
+        for i in 0..universe_size {
+            cells.set(i, js_sys::Math::random() < 0.5);
+        }
 
         Universe {
             width,

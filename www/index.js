@@ -59,9 +59,23 @@ const getIndex = (row, column) => {
     return row * width + column;
 };
 
+/**
+ * Determines if a cell is alive based on its position in a bit array.
+ *
+ * @param {number} i - The index of the cell to check.
+ * @param {Uint8Array} arr - The array containing the cell states, where each bit represents a cell.
+ * @returns {boolean} - True if the cell is alive, otherwise false.
+ */
+
+const isAlive = (i, arr) => {
+    const byte = Math.floor(i / 8);
+    const mask = 1 << (i % 8);
+    return (arr[byte] & mask) === mask
+}
+
 const drawCells = () => {
     const cellsPtr = universe.cells();
-    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height / 8); // array length is:  (width * height / 8) since we have a cell per bit rather than per byte:
 
     ctx.beginPath();
 
@@ -69,9 +83,9 @@ const drawCells = () => {
         for (let col = 0; col < width; col++) {
             const idx = getIndex(row, col);
 
-            ctx.fillStyle = cells[idx] === Cell.Dead ?
-                DEAD_COLOR :
-                ALIVE_COLOR;
+            ctx.fillStyle = isAlive(idx, cells) ?
+                ALIVE_COLOR :
+                DEAD_COLOR;
 
             ctx.fillRect(
                 col * (CELL_SIZE + 1) + 1,
