@@ -1,8 +1,5 @@
 mod utils;
 
-use std::fmt;
-use std::fmt::Formatter as fmtFormatter;
-use std::fmt::Result as fmtResult;
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global allocator
@@ -99,9 +96,9 @@ impl Universe {
         let width: u32 = 64;
         let height: u32 = 64;
 
-        let cells = (0..width * height)
-            .map(|i| {
-                if i % 2 == 0 || i % 7 == 0 {
+        let cells: Vec<Cell> = (0..width * height)
+            .map(|_|{
+                if js_sys::Math::random() < 0.5 {
                     Cell::Alive
                 } else {
                     Cell::Dead
@@ -115,21 +112,4 @@ impl Universe {
             cells,
         }
     }
-
-    // pub fn render(&self) -> String {
-    //     self.to_string()
-    // }
 }
-
-// impl fmt::Display for Universe {
-//     fn fmt(&self, f: &mut fmtFormatter) -> fmtResult {
-//         for line in self.cells.as_slice().chunks(self.width as usize) {
-//             for &cell in line {
-//                 let symbol = if cell == Cell::Dead { '◻' } else { '◼' };
-//                 write!(f, "{}", symbol)?;
-//             }
-//             write!(f, "\n")?;
-//         }
-//         Ok(())
-//     }
-// }
