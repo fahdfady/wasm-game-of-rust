@@ -20,6 +20,7 @@ pub enum Cell {
 
 // fixed-sized universe.
 // this makes infinite patterns, like gliders, that reach the end of the universe are snuffed out.
+#[wasm_bindgen]
 struct Universe {
     width: u32,  // 8*4
     height: u32, // 8*4
@@ -29,7 +30,19 @@ struct Universe {
 // formula to find the array index of the cell inside of the universe
 //  index(row, column, universe) = row * width of universe + column
 
+#[wasm_bindgen]
 impl Universe {
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    pub fn cells(&self) -> *const Cell {
+        self.cells.as_ptr()
+    }
+
     fn get_index(&self, row: u32, column: u32) -> usize {
         (row * self.width + column) as usize
     }
@@ -48,13 +61,13 @@ impl Universe {
                 count += self.cells[idx] as u8;
             }
         }
-
         count
     }
 
     /// Public methods are exported to JavaScript.
     pub fn tick(&mut self) {
         let mut next = self.cells.clone();
+
         for row in 0..self.height {
             for column in 0..self.width {
                 let index = self.get_index(row, column);
@@ -71,7 +84,6 @@ impl Universe {
                     (Cell::Alive, x) if x > 3 => Cell::Dead,
                     // Rule 4: Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
                     (Cell::Dead, 3) => Cell::Alive,
-
                     // All other cells remain in the same state.
                     (otherwise, _) => otherwise,
                 };
@@ -79,6 +91,8 @@ impl Universe {
                 next[index] = next_cell;
             }
         }
+
+        self.cells = next;
     }
 
     pub fn new() -> Universe {
@@ -101,17 +115,21 @@ impl Universe {
             cells,
         }
     }
+
+    // pub fn render(&self) -> String {
+    //     self.to_string()
+    // }
 }
 
-impl fmt::Display for Universe {
-    fn fmt(&self, f: &mut fmtFormatter) -> fmtResult {
-        for line in self.cells.as_slice().chunks(self.width as usize) {
-            for &cell in line {
-                let symbol = if cell == Cell::Dead { '◻' } else { '◼' };
-                write!(f, "{}", symbol)?;
-            }
-            write!(f, "\n")?;
-        }
-        Ok(())
-    }
-}
+// impl fmt::Display for Universe {
+//     fn fmt(&self, f: &mut fmtFormatter) -> fmtResult {
+//         for line in self.cells.as_slice().chunks(self.width as usize) {
+//             for &cell in line {
+//                 let symbol = if cell == Cell::Dead { '◻' } else { '◼' };
+//                 write!(f, "{}", symbol)?;
+//             }
+//             write!(f, "\n")?;
+//         }
+//         Ok(())
+//     }
+// }
