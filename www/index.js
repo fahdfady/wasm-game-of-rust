@@ -7,6 +7,7 @@ const DEAD_COLOR = "#FFFFFF";
 const ALIVE_COLOR = "#000000";
 
 const canvas = document.querySelector("canvas#game-of-life-canvas");
+const ctx = canvas.getContext('2d');
 
 console.log(canvas)
 
@@ -19,9 +20,8 @@ canvas.height = (CELL_SIZE * height) * 2;
 canvas.style.width = `${CELL_SIZE * width}px`;
 canvas.style.height = `${CELL_SIZE * height}px`;
 const dpi = window.devicePixelRatio;
-canvas.getContext('2d').scale(dpi, dpi);
+ctx.scale(dpi, dpi);
 
-const ctx = canvas.getContext('2d');
 
 const renderLoop = () => {
 

@@ -21,15 +21,17 @@ pub enum Cell {
 // fixed-sized universe.
 // this makes infinite patterns, like gliders, that reach the end of the universe are snuffed out.
 #[wasm_bindgen]
-struct Universe {
-    width: u32,  // 8*4
-    height: u32, // 8*4
+pub struct Universe {
+    pub width: u32,  // 8*4
+    pub height: u32, // 8*4
     cells: FixedBitSet,
 }
 
 // formula to find the array index of the cell inside of the universe
 //  index(row, column, universe) = row * width of universe + column
 
+#[allow(dead_code)]
+#[warn(unused_variables)]
 #[wasm_bindgen]
 impl Universe {
     pub fn width(&self) -> u32 {
@@ -41,6 +43,20 @@ impl Universe {
 
     pub fn cells(&self) -> *const u32 {
         self.cells.as_slice().as_ptr() as *const u32
+    }
+
+    pub fn set_width(&mut self, width: u32) {
+        self.width = width;
+        let universe_size = (self.width * self.height) as usize;
+
+        self.cells = FixedBitSet::with_capacity(universe_size);
+    }
+
+    pub fn set_height(&mut self, height: u32) {
+        self.height = height;
+        let universe_size = (self.width * self.height) as usize;
+
+        self.cells = FixedBitSet::with_capacity(universe_size);
     }
 
     fn get_index(&self, row: u32, column: u32) -> usize {
@@ -113,6 +129,21 @@ impl Universe {
             width,
             height,
             cells,
+        }
+    }
+}
+
+// testing, not exposed to js
+impl Universe {
+    pub fn get_cells(&self) -> &FixedBitSet {
+        &self.cells
+    }
+
+    pub fn set_cells(&mut self, coordinates: &[(u32, u32)]) {
+        for (row, col) in coordinates {
+            let index = self.get_index(*row, *col);
+
+            self.cells.set(index, true);
         }
     }
 }
