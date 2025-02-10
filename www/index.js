@@ -22,15 +22,16 @@ canvas.style.height = `${CELL_SIZE * height}px`;
 const dpi = window.devicePixelRatio;
 ctx.scale(dpi, dpi);
 
+const playPauseButton = document.querySelector("#play-pause");
+let animation = null;
 
 const renderLoop = () => {
-
-    universe.tick();
-
     drawGrid();
     drawCells();
 
-    requestAnimationFrame(renderLoop);
+    universe.tick();
+
+    animation = requestAnimationFrame(renderLoop);
 };
 
 requestAnimationFrame(renderLoop);
@@ -98,3 +99,28 @@ const drawCells = () => {
 
     ctx.stroke();
 };
+
+
+const play = () => {
+    playPauseButton.textContent = "||";
+    renderLoop();
+}
+
+const pause = () => {
+    playPauseButton.textContent = ">";
+    // native javascript api
+    cancelAnimationFrame(animation);
+    animation = null;
+}
+
+const isPaused = () => {
+    return animation === null;
+}
+
+playPauseButton.addEventListener("click", () => {
+    if (isPaused()) {
+        play();
+    } else {
+        pause();
+    }
+});
