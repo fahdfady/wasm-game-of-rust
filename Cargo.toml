@@ -21,9 +21,14 @@ fixedbitset = "0.5.7"
 # code size when deploying.
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
+[dependencies.web-sys]
+version = "0.3"
+features = [ "console" ]  # Do you have this line in your Cargo.toml?
+
 [dev-dependencies]
 wasm-bindgen-test = "0.3.34"
 
 [profile.release]
 # Tells `rustc` to optimize for small code size.
 opt-level = "s"
+debug = true

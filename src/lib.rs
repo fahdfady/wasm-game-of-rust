@@ -1,3 +1,4 @@
+#[macro_use]
 mod utils;
 
 use wasm_bindgen::prelude::*;
@@ -9,6 +10,11 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 extern crate fixedbitset;
 use fixedbitset::FixedBitSet;
+
+#[wasm_bindgen]
+pub fn init_panic_hook() {
+    console_error_panic_hook::set_once();
+}
 
 #[wasm_bindgen]
 #[repr(u8)] // each cell is represented as a single byte.
@@ -28,7 +34,7 @@ pub struct Universe {
 }
 
 // formula to find the array index of the cell inside of the universe
-//  index(row, column, universe) = row * width of universe + column
+//  index(row, col, universe) = row * width of universe + col
 
 #[allow(dead_code)]
 #[warn(unused_variables)]
@@ -59,11 +65,11 @@ impl Universe {
         self.cells = FixedBitSet::with_capacity(universe_size);
     }
 
-    fn get_index(&self, row: u32, column: u32) -> usize {
-        (row * self.width + column) as usize
+    fn get_index(&self, row: u32, col: u32) -> usize {
+        (row * self.width + col) as usize
     }
 
-    fn live_neighbor_count(&self, row: u32, column: u32) -> u8 {
+    fn live_neighbor_count(&self, row: u32, col: u32) -> u8 {
         let mut count = 0;
         for delta_row in [self.height - 1, 0, 1].iter().cloned() {
             for delta_col in [self.width - 1, 0, 1].iter().cloned() {
@@ -72,7 +78,7 @@ impl Universe {
                 }
 
                 let neighbor_row = (row + delta_row) % self.height;
-                let neighbor_col = (column + delta_col) % self.width;
+                let neighbor_col = (col + delta_col) % self.width;
                 let idx = self.get_index(neighbor_row, neighbor_col);
                 count += self.cells[idx] as u8;
             }
@@ -85,11 +91,19 @@ impl Universe {
         let mut next: FixedBitSet = self.cells.clone();
 
         for row in 0..self.height {
-            for column in 0..self.width {
-                let index: usize = self.get_index(row, column);
+            for col in 0..self.width {
+                let index: usize = self.get_index(row, col);
                 let cell = self.cells[index];
 
-                let live_neighbors = self.live_neighbor_count(row, column);
+                let live_neighbors = self.live_neighbor_count(row, col);
+
+                log!(
+                    "cell[{}, {}] is initially {:?} and has {} live neighbors",
+                    row,
+                    col,
+                    cell,
+                    live_neighbors
+                );
 
                 next.set(
                     index,
@@ -110,10 +124,14 @@ impl Universe {
             }
         }
 
+        log!("    it becomes {:?}", next);
+
         self.cells = next;
     }
 
     pub fn new() -> Universe {
+        utils::set_panic_hook();
+
         let width: u32 = 64;
         let height: u32 = 64;
 
