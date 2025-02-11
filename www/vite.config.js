@@ -7,13 +7,15 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig({
     root: '.',
+    base: './',
     build: {
         outDir: 'dist',
+        emptyOutDir: true,
         rollupOptions: {
             input: {
                 main: resolve(__dirname, 'index.html'),
                 bootstrap: resolve(__dirname, 'bootstrap.js')
-            }
+            },
         }
     },
     server: {
@@ -22,5 +24,13 @@ export default defineConfig({
     plugins: [
         wasm(),
         topLevelAwait()
-    ]
+    ],
+
+    server: {
+        hmr: true,
+        headers: {
+            'Cross-Origin-Opener-Policy': 'same-origin',
+            'Cross-Origin-Embedder-Policy': 'same-origin'
+        }
+    }
 })

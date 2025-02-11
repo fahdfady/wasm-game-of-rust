@@ -3,33 +3,60 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './www/package-lock.json'
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          components: rust-src, wasm32-unknown-unknown
+          target: wasm32-unknown-unknown
+          override: true
 
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "wasm-game"
+
+#   using a local dependency wasm-game-of-rust from the pkg directory. The workflow ensures this is built before the frontend build starts.
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - name: Build project
-        run: wasm-pack build --target web --release
-
-      - name: Create output directory
+      - name: Build WebAssembly
         run: |
-          mkdir -p public
-          cp -r pkg/* public/
-          cp static/* public/
+          wasm-pack build --target web --release
+          # Ensure the pkg directory exists and is populated
+          test -d pkg || exit 1
+
+      - name: Install and Build Frontend
+        working-directory: ./www
+        run: |
+          # Clean install dependencies
+          npm ci
+          # Build the project
+          npm run build
+          # Verify the build output exists
+          test -d dist || exit 1
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./www/dist
+          force_orphan: true
+          commit_message: "Deploy to GitHub Pages [skip ci]"
