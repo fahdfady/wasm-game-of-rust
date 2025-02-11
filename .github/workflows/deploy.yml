@@ -28,12 +28,6 @@ jobs:
           target: wasm32-unknown-unknown
           override: true
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "wasm-game"
-
-#   using a local dependency wasm-game-of-rust from the pkg directory. The workflow ensures this is built before the frontend build starts.
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
@@ -43,15 +37,22 @@ jobs:
           # Ensure the pkg directory exists and is populated
           test -d pkg || exit 1
 
-      - name: Install and Build Frontend
+      - name: Setup Frontend Build
         working-directory: ./www
         run: |
+          # Update index.html to use type="module, instead of adding it manually for each script tag"
+          sed -i 's/<script src="\.\/bootstrap\.js">/<script type="module" src="\.\/bootstrap\.js">/' index.html
           # Clean install dependencies
           npm ci
-          # Build the project
-          npm run build
-          # Verify the build output exists
-          test -d dist || exit 1
+
+      - name: Copy WASM files
+        run: |
+          mkdir -p www/public
+          cp -r pkg/* www/public/
+
+      - name: Build Frontend
+        working-directory: ./www
+        run: npm run build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

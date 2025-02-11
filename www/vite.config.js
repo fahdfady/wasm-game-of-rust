@@ -9,6 +9,7 @@ export default defineConfig({
     root: '.',
     base: './',
     build: {
+        target: 'esnext',
         outDir: 'dist',
         emptyOutDir: true,
         rollupOptions: {
@@ -16,21 +17,30 @@ export default defineConfig({
                 main: resolve(__dirname, 'index.html'),
                 bootstrap: resolve(__dirname, 'bootstrap.js')
             },
+            // Explicitly mark WASM imports as external
+            external: [/\.wasm$/],
+            output: {
+                // Ensure WASM files are copied to output
+                assetFileNames: 'assets/[name][extname]'
+            }
         }
+
     },
     server: {
-        open: 'index.html'
+        open: 'index.html',
+        hmr: true,
+        headers: {
+            'Cross-Origin-Opener-Policy': 'same-origin',
+            'Cross-Origin-Embedder-Policy': 'same-origin'
+        }
     },
     plugins: [
         wasm(),
         topLevelAwait()
     ],
 
-    server: {
-        hmr: true,
-        headers: {
-            'Cross-Origin-Opener-Policy': 'same-origin',
-            'Cross-Origin-Embedder-Policy': 'same-origin'
-        }
+    optimizeDeps: {
+        // Exclude WASM files from dependency optimization
+        exclude: ['wasm-game-of-rust']
     }
 })
