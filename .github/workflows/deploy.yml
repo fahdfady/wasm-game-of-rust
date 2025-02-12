@@ -10,16 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.13.1'
-          cache: 'npm'
-          cache-dependency-path: './www/package-lock.json'
+          node-version: "22.13.1"
+          cache: "npm"
+          cache-dependency-path: "./www/package-lock.json"
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -32,10 +32,11 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build WebAssembly
+        working-directory: ./www
         run: |
-          wasm-pack build --target web --release
+          npm run wasm
           # Ensure the pkg directory exists and is populated
-          test -d pkg || exit 1
+          test -d ../pkg || exit 1
 
       - name: Setup Frontend Build
         working-directory: ./www
