@@ -97,13 +97,13 @@ impl Universe {
 
                 let live_neighbors = self.live_neighbor_count(row, col);
 
-                log!(
-                    "cell[{}, {}] is initially {:?} and has {} live neighbors",
-                    row,
-                    col,
-                    cell,
-                    live_neighbors
-                );
+                // log!(
+                //     "cell[{}, {}] is initially {:?} and has {} live neighbors",
+                //     row,
+                //     col,
+                //     cell,
+                //     live_neighbors
+                // );
 
                 next.set(
                     index,
@@ -124,9 +124,14 @@ impl Universe {
             }
         }
 
-        log!("    it becomes {:?}", next);
+        // log!("    it becomes {:?}", next);
 
         self.cells = next;
+    }
+
+    pub fn toggle_cell(&mut self, row: u32, col: u32) {
+        let index = self.get_index(row, col);
+        self.cells.toggle(index);
     }
 
     pub fn new() -> Universe {
@@ -151,6 +156,15 @@ impl Universe {
     }
 }
 
+impl Cell {
+    fn toggle(&mut self) {
+        *self = match *self {
+            Cell::Dead => Cell::Alive,
+            Cell::Alive => Cell::Dead,
+        };
+    }
+}
+
 // testing, not exposed to js
 impl Universe {
     pub fn get_cells(&self) -> &FixedBitSet {
@@ -158,8 +172,14 @@ impl Universe {
     }
 
     pub fn set_cells(&mut self, coordinates: &[(u32, u32)]) {
-        for (row, col) in coordinates {
-            let index = self.get_index(*row, *col);
+        // for (row, col) in coordinates {
+        //     let index = self.get_index(*row, *col);
+
+        //     self.cells.set(index, true);
+        // }
+
+        for (row, col) in coordinates.iter().cloned() {
+            let index = self.get_index(row, col);
 
             self.cells.set(index, true);
         }

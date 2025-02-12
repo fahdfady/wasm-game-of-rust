@@ -6,30 +6,32 @@ const GRID_COLOR = "#CCCCCC";
 const DEAD_COLOR = "#FFFFFF";
 const ALIVE_COLOR = "#000000";
 
-const canvas = document.querySelector("canvas#game-of-life-canvas");
+const canvas: any = document.querySelector("canvas#game-of-life-canvas");
 const ctx = canvas.getContext('2d');
 
 console.log(canvas)
 
 const universe = Universe.new();
+console.log(universe)
+// console.log(universe.toggle_cell(0, 0))
 const width = universe.width();
 const height = universe.height();
 
-canvas.width = (CELL_SIZE * width) * 2;
-canvas.height = (CELL_SIZE * height) * 2;
+canvas.width = (CELL_SIZE * width);
+canvas.height = (CELL_SIZE * height);
 canvas.style.width = `${CELL_SIZE * width}px`;
 canvas.style.height = `${CELL_SIZE * height}px`;
 const dpi = window.devicePixelRatio;
 ctx.scale(dpi, dpi);
 
-const playPauseButton = document.querySelector("#play-pause");
-let animation = null;
+const playPauseButton: Element | null = document.querySelector("#play-pause");
+let animation: number | null = null;
 
 const renderLoop = () => {
+    universe.tick();
+
     drawGrid();
     drawCells();
-
-    universe.tick();
 
     animation = requestAnimationFrame(renderLoop);
 };
@@ -68,10 +70,16 @@ const getIndex = (row, column) => {
  * @returns {boolean} - True if the cell is alive, otherwise false.
  */
 
-const isAlive = (i, arr) => {
-    const byte = Math.floor(i / 8);
-    const mask = 1 << (i % 8);
-    return (arr[byte] & mask) === mask
+const isAlive = (i: number, arr: Uint8Array<ArrayBuffer>): boolean => {
+    const u32Index = Math.floor(i / 32); // divide i by 32 that gives us the index of the 32-bit word (4 bytes)that contains the cell state.
+    const byteOffset = (i % 32) >> 3; // the remainder of i/32, then shift by 3 bits to the right to get the byte offset
+
+    const bitinByte = i % 8;
+
+    const byteIndex = u32Index * 4 + byteOffset;
+    const mask = 1 << bitinByte;
+
+    return (arr[byteIndex] & mask) !== 0;
 }
 
 const drawCells = () => {
@@ -101,12 +109,15 @@ const drawCells = () => {
 };
 
 
+if (!playPauseButton) throw new Error("Play button not found");
+
 const play = () => {
     playPauseButton.textContent = "||";
     renderLoop();
 }
 
 const pause = () => {
+    if (!animation) throw new Error("Animation not found");
     playPauseButton.textContent = ">";
     // native javascript api
     cancelAnimationFrame(animation);
@@ -124,3 +135,25 @@ playPauseButton.addEventListener("click", () => {
         pause();
     }
 });
+
+
+canvas.addEventListener(("click"), e => {
+    const rect = canvas.getBoundingClientRect();
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const canvasLeft = (e.clientX - rect.left) * scaleX;
+    const canvasTop = (e.clientY - rect.top) * scaleY;
+
+    const row = Math.min(Math.floor(canvasTop / ((CELL_SIZE + 1))), height - 1);
+    const col = Math.min(Math.floor(canvasLeft / ((CELL_SIZE + 1))), width - 1);
+
+    // console.log(row, col)
+
+    universe.toggle_cell(row, col);
+
+    drawGrid();
+    drawCells();
+
+})
