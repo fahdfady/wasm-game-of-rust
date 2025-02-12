@@ -17,7 +17,7 @@ export default defineConfig({
                 bootstrap: resolve(__dirname, 'bootstrap.js')
             },
             // Explicitly mark WASM imports as external
-            // external: [/\.wasm$/],
+            external: ['wbg'],
             output: {
                 // Ensure WASM files are copied to output
                 assetFileNames: 'assets/[name][extname]'
