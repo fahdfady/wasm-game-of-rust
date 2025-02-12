@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>wasm-game-of-rust</title>
+    <style>
+        body {
+            margin: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #play-pause {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 5px;
+            padding: 0.5rem;
+            background-color: #181818;
+            cursor: pointer;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+
+  <script type="module" crossorigin src="./assets/main-D3WpO2Ao.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/bootstrap-B9CLTMz7.js">
+</head>
+
+<body>
+
+    <button id="play-pause">||</button>
+
+    <canvas id="game-of-life-canvas"></canvas>
+
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+</body>
+
+</html>
